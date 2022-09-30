@@ -53,7 +53,7 @@ always @(*) begin
             //  _dsp + 00_01 -- increment by 1
             //  _dsp + 11_10 -- decrement by 2
             //  _dsp + 11_11 -- decrement by 1
-            {ds_we, _dsp} = {instr[6], dsp + {instr[1], instr[1], instr[1:0]}};
+            {ds_we, _dsp} = {instr[7], dsp + {instr[1], instr[1], instr[1:0]}};
     endcase
 end
 

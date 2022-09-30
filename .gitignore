@@ -1,2 +1,4 @@
 *_tb
 bin/*.bin
+fs/*.bin
+fs/*.mem

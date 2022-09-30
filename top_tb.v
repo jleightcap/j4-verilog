@@ -40,13 +40,20 @@ initial begin
     // verilator lint_on INFINITELOOP
 end
 
+always @(posedge clk) begin
+    if (io_we)
+        $display("IO_OUT ram[%2h] <- %2h", io_ptr, io_in);
+    if (io_re)
+        $display("IO_IN ram[%2h] -> %2h", io_ptr, io_out);
+end
+
 `ifndef FILE
     `define FILE "bin/test.mem"
 `endif
 
 initial begin
     #0 $readmemb(`FILE, ram);
-    #0 $monitor("instr=%2h@%2h o?=%1b i?=%1b io_ptr=%2h io_in=%2h", instr, pc, io_we, io_re, io_ptr, io_in);
+    #0 $monitor("instr=%2h@%2h io_we?=%1b io_re?=%1b T/io_ptr=%2h N/io_in=%2h", instr, pc, io_we, io_re, io_ptr, io_in);
     #1000 $finish;
 end
 

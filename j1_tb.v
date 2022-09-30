@@ -31,7 +31,7 @@ j1 j1_dut( .clk(clk)
 
 // verilator lint_off STMTDLY
 initial begin
-    #0 clk=1; { instr }=0;
+    #0 clk=1; { instr , io_out }=0;
     // verilator lint_off INFINITELOOP
     forever #1 clk=!clk;
     // verilator lint_on INFINITELOOP
