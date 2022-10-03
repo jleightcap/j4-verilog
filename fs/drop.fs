@@ -1,1 +1,1 @@
-2 1 DROP
+3 DROP 1 DROP

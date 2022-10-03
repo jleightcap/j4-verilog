@@ -1,0 +1,6 @@
+// `!` in forth lingo
+
+1_111_0000_0000_1111        // ptr: literal 0x700f
+
+// ram[ptr] <- val
+011_0_0001_0010_0011        // ALU N ; N -> [T] ; dsp -= 1

@@ -154,6 +154,11 @@ wire [12:0] pc_inc;
 
 assign pc_inc = pc + 1;
 
+initial begin
+    { _pc } = 0;
+end
+
+
 // instruction effect on program counter
 always @(*) begin
     casez ({instr[15:13]})
@@ -170,7 +175,9 @@ always @(*) begin
     endcase
 end
 
-assign io_we = (instr[15:13] == 3'b011) & instr[5]; // ALU N -> [T]
+ // ALU & N -> [T]
+assign io_we = (instr[15:13] == 3'b011) & instr[5];
+// ALU & T' = [T] & ptr & pointer into RAM 'above' PC
 assign io_re = (instr[15:13] == 3'b011) & (instr[11:8] == 4'hc) & (|dst0[15:14]);
 assign io_ptr = dst0;
 assign io_out = dst1;
