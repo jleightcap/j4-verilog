@@ -2,10 +2,10 @@ IVERILOG_FLAGS  += -Wall
 VERILATOR_FLAGS += --lint-only -Wall
 
 %_tb: j1.v %_tb.v
-	iverilog $(IVERILOG_FLAGS) -D TESTBENCH $^ -o $@
+	iverilog -o $@ $(IVERILOG_FLAGS) -D TESTBENCH $^ 
 
 %.bin: %.mem top_tb.v
-	iverilog $(IVERILOG_FLAGS) -D FILE=\"$<\" top_tb.v j1.v -o $@
+	iverilog -o $@ $(IVERILOG_FLAGS) -D FILE=\"$<\" top_tb.v j1.v
 
 .PRECIOUS: %.mem
 %.mem: %.fs
