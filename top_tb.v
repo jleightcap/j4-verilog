@@ -11,7 +11,6 @@ wire [`WIDTH-1:0] io_ptr;
 reg  [`WIDTH-1:0] io_out;
 wire [`WIDTH-1:0] io_in;
 
-// FIXME(jl): i thought there were only 15 bit pointers?
 reg [`WIDTH-1:0] ram [0:(1<<`WIDTH)-1];
 
 always @(posedge clk) begin
@@ -22,7 +21,7 @@ always @(posedge clk) begin
     instr <= ram[{3'b0, pc}];
 end
 
-j1 cpu( .pc(pc)
+j4 cpu( .pc(pc)
       , .clk(clk)
       , .instr(instr)
       , .io_we(io_we)
@@ -53,7 +52,7 @@ end
 
 initial begin
     #0 $readmemb(`FILE, ram);
-    #0 $monitor("instr=%2h@%2h io_we?=%1b io_re?=%1b T/io_ptr=%2h N/io_in=%2h", instr, pc, io_we, io_re, io_ptr, io_in);
+    #0 $monitor("instr=%2h@%2h io_we=%1b io_re=%1b T/io_ptr=%2h N/io_in=%2h", instr, pc, io_we, io_re, io_ptr, io_in);
     #1000 $finish;
 end
 

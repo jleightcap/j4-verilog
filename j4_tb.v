@@ -1,6 +1,6 @@
 `include "common.h"
 
-module j1_tb;
+module j4_tb;
 
 reg clk;
 reg [15:0] instr;
@@ -15,7 +15,7 @@ wire [`DEPTH-1:0] dsp_dut;
 wire [`WIDTH-1:0] dst0_dut;
 wire [`WIDTH-1:0] dst1_dut;
 
-j1 j1_dut( .clk(clk)
+j4 j4_dut( .clk(clk)
          , .instr(instr)
          , .io_we(io_we)
          , .io_re(io_re)

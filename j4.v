@@ -1,6 +1,6 @@
 `include "common.h"
 
-module j1( input  wire clk
+module j4( input  wire clk
          , output reg  [12:0] pc
          , input  wire [15:0] instr
          , output wire io_we                    // I/O write enable
