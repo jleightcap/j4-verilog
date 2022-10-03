@@ -8,8 +8,10 @@ VERILATOR_FLAGS += --lint-only -Wall
 	iverilog -o $@ $(IVERILOG_FLAGS) -D FILE=\"$<\" top_tb.v j1.v
 
 .PRECIOUS: %.mem
-%.mem: %.fs
-	runghc assembler/asm.hs < $< > $@
+%.mem: %.fs compiler
+	runghc compiler/j1.hs < $< > $@
+
+compiler: compiler/*.hs
 
 .PHONY: lint
 lint: j1.v top_tb.v

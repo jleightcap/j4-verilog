@@ -6,47 +6,48 @@ import Text.Printf
 import System.Environment (getArgs)
 import System.Exit (die)
 
-data ForthWord
+data ForthPrimWord
     = SWAP
     | DUP
     | DROP
+    | PLUS
     | LIT Int
     deriving (Show)
 
-type Program = [ForthWord]
+type Program = [ForthPrimWord]
 
 whitespace :: Parser ()
 whitespace = void $ many1 $ oneOf " \n\t"
 
 parseForth :: Parser Program
-parseForth = parseForthWord `sepEndBy` whitespace
+parseForth = parseForthPrimWord `sepEndBy` whitespace
 
-parseForthWord :: Parser ForthWord
-parseForthWord = try parseSwap <|> try parseDup <|> try parseDrop <|> try parseLit
+parseForthPrimWord :: Parser ForthPrimWord
+parseForthPrimWord = try parseSwap <|> try parseDup <|> try parseDrop <|> try parseLit
 
-parseSwap :: Parser ForthWord
+parseSwap :: Parser ForthPrimWord
 parseSwap = string "SWAP" $> SWAP
 
-parseDup :: Parser ForthWord
+parseDup :: Parser ForthPrimWord
 parseDup = string "DUP" $> DUP
 
-parseDrop :: Parser ForthWord
+parseDrop :: Parser ForthPrimWord
 parseDrop = string "DROP" $> DROP
 
-parseLit :: Parser ForthWord
+parseLit :: Parser ForthPrimWord
 parseLit = LIT . read <$> many1 digit
 
 parseWithEof :: Parser a -> String -> Either ParseError a
 parseWithEof p = parse (p <* eof) ""
 
-compileForthWord :: ForthWord -> String
-compileForthWord SWAP = "011_0_0001_1000_00_00"
-compileForthWord DUP = "011_0_0000_1000_00_01"
-compileForthWord DROP = "011_0_0001_0000_00_11"
-compileForthWord (LIT n) = "1_" ++ printf "%015b" n
+compileForthPrimWord :: ForthPrimWord -> String
+compileForthPrimWord SWAP = "011_0_0001_1000_00_00"
+compileForthPrimWord DUP = "011_0_0000_1000_00_01"
+compileForthPrimWord DROP = "011_0_0001_0000_00_11"
+compileForthPrimWord (LIT n) = "1_" ++ printf "%015b" n
 
 compile :: Program -> String
-compile = unlines . map compileForthWord
+compile = unlines . map compileForthPrimWord
 
 main :: IO ()
 main = do
