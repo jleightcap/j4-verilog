@@ -1,5 +1,6 @@
 IVERILOG_FLAGS  += -Wall
 VERILATOR_FLAGS += --lint-only -Wall
+GHC_FLAGS       += -icompiler -Wall
 
 %_tb: j4.v %_tb.v
 	iverilog -o $@ $(IVERILOG_FLAGS) -D TESTBENCH $^ 
@@ -7,9 +8,11 @@ VERILATOR_FLAGS += --lint-only -Wall
 %.bin: %.mem top_tb.v
 	iverilog -o $@ $(IVERILOG_FLAGS) -D FILE=\"$<\" top_tb.v j4.v
 
+%.run: %.bin ; ./$^
+
 .PRECIOUS: %.mem
 %.mem: %.fs compiler
-	runghc compiler/j4.hs < $< > $@
+	runghc --ghc-arg=$(GHC_FLAGS) compiler/j4.hs < $< > $@
 
 compiler: compiler/*.hs
 

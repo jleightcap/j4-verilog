@@ -1,59 +1,132 @@
-module Asm where
+module J4 where
 
 import Data.Functor
-import Text.ParserCombinators.Parsec
-import Text.Printf
-import System.Environment (getArgs)
 import System.Exit (die)
+import Text.ParserCombinators.Parsec
+
+import Types
 
 data ForthPrimWord
-    = SWAP
+    = LIT Int
     | DUP
-    | DROP
     | PLUS
-    | LIT Int
+    | SWAP
+    | DROP
+    | MREAD -- `@`
+    | MWRITE -- `!`
     deriving (Show)
 
 type Program = [ForthPrimWord]
 
+-------------------------------------------------------------------------------
+-- PARSING
 whitespace :: Parser ()
 whitespace = void $ many1 $ oneOf " \n\t"
 
 parseForth :: Parser Program
-parseForth = parseForthPrimWord `sepEndBy` whitespace
+parseForth =
+    choice (map (try . parseForthPrimWord) [SWAP, DUP, DROP, PLUS, LIT 0]) `sepEndBy`
+    whitespace
 
-parseForthPrimWord :: Parser ForthPrimWord
-parseForthPrimWord = try parseSwap <|> try parseDup <|> try parseDrop <|> try parseLit
-
-parseSwap :: Parser ForthPrimWord
-parseSwap = string "SWAP" $> SWAP
-
-parseDup :: Parser ForthPrimWord
-parseDup = string "DUP" $> DUP
-
-parseDrop :: Parser ForthPrimWord
-parseDrop = string "DROP" $> DROP
-
-parseLit :: Parser ForthPrimWord
-parseLit = LIT . read <$> many1 digit
+parseForthPrimWord :: ForthPrimWord -> Parser ForthPrimWord
+parseForthPrimWord (LIT _) = LIT . read <$> many1 digit
+parseForthPrimWord DUP = string "DUP" $> DUP
+parseForthPrimWord PLUS = string "+" $> PLUS
+parseForthPrimWord SWAP = string "SWAP" $> SWAP
+parseForthPrimWord DROP = string "DROP" $> DROP
+parseForthPrimWord MREAD = string "@" $> MREAD
+parseForthPrimWord MWRITE = string "!" $> MWRITE
 
 parseWithEof :: Parser a -> String -> Either ParseError a
 parseWithEof p = parse (p <* eof) ""
 
+-------------------------------------------------------------------------------
+-- COMPILATION
 compileForthPrimWord :: ForthPrimWord -> String
-compileForthPrimWord SWAP = "011_0_0001_1000_00_00"
-compileForthPrimWord DUP = "011_0_0000_1000_00_01"
-compileForthPrimWord DROP = "011_0_0001_0000_00_11"
-compileForthPrimWord (LIT n) = "1_" ++ printf "%015b" n
+compileForthPrimWord pw = concatMap show (cpw pw) ++ comment (show pw)
+  where
+    cpw :: ForthPrimWord -> [Instruction]
+    cpw (LIT n) = [Lit n]
+    cpw DUP =
+        [ ALU
+              { r'pc = Low
+              , t' = T
+              , t'n = High
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Inc
+              }
+        ]
+    cpw PLUS =
+        [ ALU
+              { r'pc = Low
+              , t' = Add
+              , t'n = Low
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Dec
+              }
+        ]
+    cpw SWAP =
+        [ ALU
+              { r'pc = Low
+              , t' = N
+              , t'n = High
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Null
+              }
+        ]
+    cpw DROP =
+        [ ALU
+              { r'pc = Low
+              , t' = N
+              , t'n = Low
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Dec
+              }
+        ]
+    cpw MREAD =
+        [ ALU
+              { r'pc = Low
+              , t' = Ptr
+              , t'n = Low
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Null
+              }
+        ]
+    cpw MWRITE =
+        [ ALU
+              { r'pc = Low
+              , t' = N
+              , t'n = Low
+              , t'r = Low
+              , n't = Low
+              , rsd = Null
+              , dsd = Dec
+              }
+        ]
 
 compile :: Program -> String
 compile = unlines . map compileForthPrimWord
 
+comment :: String -> String
+comment = (++) "\t//\t"
+
 main :: IO ()
-main = do
-    args <- getArgs
+main
+    -- args <- getArgs
+ = do
     txt <- getContents
-    parsed <- case parseWithEof parseForth txt of
-        Left err -> die (show err)
-        Right p -> return p
+    parsed <-
+        case parseWithEof parseForth txt of
+            Left err -> die (show err)
+            Right p -> return p
     putStrLn (compile parsed)
