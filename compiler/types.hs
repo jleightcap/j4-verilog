@@ -1,9 +1,60 @@
 module Types where
 
+import qualified Data.Map as M
 import Text.Printf
 
+-------------------------------------------------------------------------------
+-- FORTH TYPES
+-------------------------------------------------------------------------------
+data ForthPrimWord
+    = LIT Int
+    | DUP
+    | PLUS
+    | SWAP
+    | DROP
+    | MREAD -- `@`
+    | MWRITE -- `!`
+    deriving (Show)
+
+defaultPrims :: [ForthPrimWord]
+defaultPrims = [LIT 0, DUP, PLUS, SWAP, DROP, MREAD, MWRITE]
+
+data ForthDefn =
+    Defn
+        { name :: String
+        , body :: [ForthWord]
+        }
+    deriving (Show)
+
+data ForthWord
+    = WordPrim ForthPrimWord -- forth primitive
+    | WordDefn String -- defined (non-primitive) word
+    deriving (Show)
+
+data ForthStmt
+    = ForthStmtExec [ForthWord]
+    | ForthStmtDefn ForthDefn
+    deriving (Show)
+
+type ForthEnv = M.Map String ForthDefn
+
+defaultEnv :: ForthEnv
+defaultEnv = M.empty
+
+type AST = [ForthStmt]
+
+-------------------------------------------------------------------------------
+-- COMPILATION TYPES
+-------------------------------------------------------------------------------
 newtype Target =
     Target Int
+
+-- a label, used to parametrize `Instruction` before pointer resolution.
+newtype Label =
+    Label String
+
+instance Show Label where
+    show (Label s) = s
 
 instance Show Target where
     show (Target i) = printf "%015b" i
@@ -58,27 +109,31 @@ data AluOp
 instance Show AluOp where
     show = printf "%04b" . fromEnum
 
-data Instruction
-    = Lit Int
-    | Jmp Target
-    | Cjmp Target
-    | Call Target
-    | ALU
-          { r'pc :: Bit
-          , t' :: AluOp
-          , t'n :: Bit
-          , t'r :: Bit
-          , n't :: Bit
-          , rsd :: StackDelta
-          , dsd :: StackDelta
-          }
+data AluArgs =
+    AluArgs
+        { r'pc :: Bit
+        , t' :: AluOp
+        , t'n :: Bit
+        , t'r :: Bit
+        , n't :: Bit
+        , rsd :: StackDelta
+        , dsd :: StackDelta
+        }
+    deriving (Show)
 
-instance Show Instruction where
+data Instruction t
+    = Lit Int
+    | Jmp t
+    | Cjmp t
+    | Call t
+    | ALU AluArgs
+
+instance Show (Instruction Target) where
     show (Lit n) = "1" ++ printf "%015b" n
     show (Jmp t) = "000" ++ show t
     show (Cjmp t) = "001" ++ show t
     show (Call t) = "010" ++ show t
-    show (ALU {r'pc, t', t'n, t'r, n't, dsd, rsd}) =
+    show (ALU (AluArgs {r'pc, t', t'n, t'r, n't, dsd, rsd})) =
         concat
             [ "011"
             , show r'pc
@@ -90,3 +145,10 @@ instance Show Instruction where
             , show rsd
             , show dsd
             ]
+
+instance Show (Instruction Label) where
+    show (Lit n) = "LIT " ++ show n
+    show (Jmp t) = "JMP " ++ show t
+    show (Cjmp t) = "CJMP " ++ show t
+    show (Call t) = "CALL " ++ show t
+    show (ALU (AluArgs {r'pc, t', t'n, t'r, n't, dsd, rsd})) = "ALU " ++ show t'

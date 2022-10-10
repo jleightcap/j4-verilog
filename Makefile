@@ -11,10 +11,11 @@ GHC_FLAGS       += -icompiler -Wall
 %.run: %.bin ; ./$^
 
 .PRECIOUS: %.mem
-%.mem: %.fs compiler
-	runghc --ghc-arg=$(GHC_FLAGS) compiler/j4.hs < $< > $@
+%.mem: %.fs j4th
+	./j4th < $< > $@
 
-compiler: compiler/*.hs
+j4th: compiler/*.hs
+	ghc $(GHC_FLAGS) compiler/j4.hs -o j4th
 
 .PHONY: lint
 lint: j4.v top_tb.v

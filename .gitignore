@@ -2,3 +2,7 @@
 bin/*.bin
 fs/*.bin
 fs/*.mem
+**.o
+**.hi
+dist-newstyle/
+j4th

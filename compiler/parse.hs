@@ -52,7 +52,7 @@ parseForthStmtExec = ForthStmtExec <$> parseForthWord `sepEndBy1` whitespace
 parseForthStmt :: Parser ForthStmt
 parseForthStmt = try parseForthStmtDefn <|> try parseForthStmtExec
 
-parseForth :: Parser Program
+parseForth :: Parser AST
 parseForth = parseForthStmt `sepEndBy` optional whitespace
 
 parseWithEof :: Parser a -> String -> Either ParseError a
@@ -63,7 +63,7 @@ parseWithLeftOver p = parse ((,) <$> p <*> leftOver) ""
   where
     leftOver = manyTill anyToken eof
 
-parseIO :: String -> IO Program
+parseIO :: String -> IO AST
 parseIO s =
     case parseWithEof parseForth s of
         Left err -> die (show err)
