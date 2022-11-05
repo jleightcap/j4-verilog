@@ -1,10 +1,10 @@
 with import <nixpkgs> {};
 stdenv.mkDerivation {
-  name = "j1";
+  name = "j4";
   nativeBuildInputs = [
     verilog verilator
-    ghc
-    haskellPackages.hindent haskell-language-server
+    haskellPackages.ghc
+    haskellPackages.hindent haskellPackages.haskell-language-server
   ];
   src = ./.;
 }
