@@ -11,7 +11,7 @@ j4th: compiler/*.hs
 .PHONY: lint
 lint:
 	verilator -DTESTBENCH --lint-only -Wall *.v
-	shellcheck -oall test.sh
+	hlint compiler/
 
 .PHONY: test
 test: $(TESTS)
