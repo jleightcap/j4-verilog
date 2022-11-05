@@ -193,7 +193,7 @@ always @(*) begin
         3'b010: /* call */
             _pc = instr[12:0];
         3'b011: /* alu */
-            _pc = pc_inc;
+            _pc =  instr[12] ? rst0[12:0] : pc_inc;
     endcase
 end
 
