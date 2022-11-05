@@ -13,6 +13,8 @@ module j4( input  wire clk
          , output wire [`DEPTH-1:0] dsp_dut
          , output wire [`WIDTH-1:0] dst0_dut
          , output wire [`WIDTH-1:0] dst1_dut
+         , output wire [`DEPTH-1:0] rsp_dut
+         , output wire [`WIDTH-1:0] rst0_dut
 `endif
     );
 
@@ -21,7 +23,7 @@ module j4( input  wire clk
 //
 reg  ds_we;                         // data stack write enable
 reg  [`WIDTH-1:0] dst0, _dst0;      // top of data stack, synchronous and asynchronous
-wire [`WIDTH-1:0] dst1;              // data stack read value
+wire [`WIDTH-1:0] dst1;             // data stack read value
 reg  [`DEPTH-1:0] dsp, _dsp;        // data stack pointer, synchronous and asynchronous
 
 initial begin
@@ -105,44 +107,63 @@ end
 
 always @* begin
     casez ({instr[15:8]})
-        8'b1??_?_????: /* zero-padded instruction-encoded literal */
-            _dst0 = {{(`WIDTH - 15){1'b0}}, instr[14:0]};
+        8'b1??_?_????:
+            {_dst0, _rst0} =
+                { {{(`WIDTH - 15){1'b0}}, instr[14:0]},   /* T zero-padded instruction-encoded literal */
+                  rst0                                    /* R unchanged */
+                };
         8'b000_?_????, /* jump */
-        8'b001_?_????, /* conditional jump */
+        8'b001_?_????: /* conditional jump */
+            {_dst0, _rst0} = {dst0, rst0};                /* unchanged */
         8'b010_?_????: /* call */
-            _dst0 = dst0;
-        8'b011_?_0000: /* alu: T */
-            _dst0 = dst0;
-        8'b011_?_0001: /* alu: N */
-            _dst0 = dst1;
-        8'b011_?_0010: /* alu: T + N */
-            _dst0 = dst0 + dst1 ;
-        8'b011_?_0011: /* alu: T & N */
-            _dst0 = dst0 & dst1;
-        8'b011_?_0100: /* alu: T | N */
-            _dst0 = dst0 | dst1;
-        8'b011_?_0101: /* alu: T ^ N */
-            _dst0 = dst0 ^ dst1;
-        8'b011_?_0110: /* alu: not T */
-            _dst0 = ~dst0;
-        8'b011_?_0111: /* alu: N == T */
-            _dst0 = {16{(dst0 == dst1)}};
-        8'b011_?_1000: /* alu: N < T */
-            _dst0 = {16{($signed(dst1) < $signed(dst0))}};
-        8'b011_?_1001: /* alu: N >> 1 */
-            _dst0 = dst0 >> 1;
-        8'b011_?_1010: /* alu: T - 1 */
-            _dst0 = dst0 - 1;
-        8'b011_?_1011: /* alu: R */
-            _dst0 = rst0;
-        8'b011_?_1100: /* alu: [T] */
-            _dst0 = io_in;
-        8'b011_?_1101: /* alu: N << 1 */
-            _dst0 = dst0 << 1;
-        8'b011_?_1110: /* alu: depth */
-            _dst0 = {{(`WIDTH - 8){1'b0}}, rsp, dsp};
-        8'b011_?_1111: /* alu: N u< T */
-            _dst0 = {16{(dst1 < dst0)}};
+            {_dst0, _rst0} =
+                { dst0,                                   /* T unchanged */
+                  {{(`WIDTH - 13){1'b0}}, pc_inc}         /* R <- PC + 1 (return address) */
+                };
+        8'b011_?_0000:
+            {_dst0, _rst0} = {dst0, rst0};                /* T unchanged, R unchanged (NOP) */
+        8'b011_?_0001:
+            {_dst0, _rst0} = {dst1, rst0};                /* T <- N, R unchanged */
+        8'b011_?_0010:
+            {_dst0, _rst0} = {dst0 + dst1, rst0};         /* T <- T + N, R unchanged */
+        8'b011_?_0011:
+            {_dst0, _rst0} = {dst0 & dst1, rst0};         /* T <- T & N, R unchanged */
+        8'b011_?_0100:
+            {_dst0, _rst0} = {dst0 | dst1, rst0};         /* T <- T | N, R unchanged */
+        8'b011_?_0101:
+            {_dst0, _rst0} = {dst0 ^ dst1, rst0};         /* T <- T ^ N, R unchanged */
+        8'b011_?_0110:
+            {_dst0, _rst0} = {~dst0, rst0};               /* T <- ~T, R unchanged */
+        8'b011_?_0111:
+            {_dst0, _rst0} =
+                { {16{(dst0 == dst1)}},                   /* T <- T == N */
+                  rst0                                    /* R unchanged */
+                };
+        8'b011_?_1000:
+            {_dst0, _rst0} =
+                { {16{($signed(dst1) < $signed(dst0))}},  /* T <- N s< T */
+                  rst0                                    /* R unchanged */
+                };
+        8'b011_?_1001:
+            {_dst0, _rst0} = { dst0 >> 1, rst0};          /* T <- T >> 1, R unchanged */
+        8'b011_?_1010:
+            {_dst0, _rst0} = {dst0 - `WIDTH'h1, rst0};    /* T <- T - 1, R unchanged */
+        8'b011_?_1011:
+            {_dst0, _rst0} = {rst0, rst0};                /* T <- R, R unchanged */
+        8'b011_?_1100:
+            {_dst0, _rst0} = {io_in, rst0};               /* T <- [T], R unchanged */
+        8'b011_?_1101:
+            {_dst0, _rst0} = {dst0 << 1, rst0};           /* T <- T << 1, R unchanged */
+        8'b011_?_1110:
+            {_dst0, _rst0} =
+                { {{(`WIDTH - 8){1'b0}}, rsp, dsp},       /* T <- {rsp, dsp} */
+                  rst0                                    /* R unchanged */
+                };
+        8'b011_?_1111:
+            {_dst0, _rst0} =
+                { {16{(dst1 < dst0)}},                    /* T <- N u< R */
+                  rst0                                    /* R unchanged */
+                };
     endcase
 end
 
@@ -188,7 +209,7 @@ always @(posedge clk) begin
 end
 
 `ifdef TESTBENCH
-    assign { dsp_dut , dst0_dut , dst1_dut , pc_dut } = { dsp , dst0 , dst1 , pc };
+    assign { dsp_dut , dst0_dut , dst1_dut , rsp_dut, rst0_dut, pc_dut } = { dsp , dst0 , dst1 , rsp, rst0, pc };
 `endif
 
 endmodule
