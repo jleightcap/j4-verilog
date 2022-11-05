@@ -13,6 +13,7 @@ module j4( input  wire clk
          , output wire [`DEPTH-1:0] dsp_dut
          , output wire [`WIDTH-1:0] dst0_dut
          , output wire [`WIDTH-1:0] dst1_dut
+         , output wire ds_we_dut
          , output wire [`DEPTH-1:0] rsp_dut
          , output wire [`WIDTH-1:0] rst0_dut
 `endif
@@ -209,7 +210,8 @@ always @(posedge clk) begin
 end
 
 `ifdef TESTBENCH
-    assign { dsp_dut , dst0_dut , dst1_dut , rsp_dut, rst0_dut, pc_dut } = { dsp , dst0 , dst1 , rsp, rst0, pc };
+    assign { dsp_dut , dst0_dut , dst1_dut , ds_we_dut , rsp_dut , rst0_dut, pc_dut } =
+           { dsp     , dst0     , dst1     , ds_we     , rsp     , rst0    , pc };
 `endif
 
 endmodule
