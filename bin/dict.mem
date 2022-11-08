@@ -1,0 +1,21 @@
+// a forth-styled dictionary example.
+
+000_1_0000_0000_0000     // unconditional jump to 0x1000
+
+// dictionary entry structure:
+// ptr to next word
+// {word length + flags, word byte 2}
+// {word byte 1, word byte 1}
+// word defn...
+
+0000_0000_0000_0110     // ptr to next word
+0000_0001_0010_1011     // 1, '+'
+0000_0000_0000_0000     // null, null
+011_0_0010_0000_00_11   // +
+011_1_0000_0000_1100    // ;
+
+0000_0000_0000_0000     // ptr to next word
+0000_0001_0010_1101     // 1, '-'
+0000_0000_0000_0000     // null, null
+011_0_1010_0000_0000    // T - 1
+011_1_0000_0000_1100    // ;
