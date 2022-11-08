@@ -1,12 +1,12 @@
-IVERILOG_FLAGS  += -Wall -D TESTBENCH
-GHC_FLAGS       += -icompiler -Wall
+COMPILER_BIN := j4th
 
-MATCH := $(wildcard bin/*.awk) $(wildcard fs/*.awk)
-TESTS := $(MATCH:awk=test)
+IVERILOG_FLAGS += -Wall -D TESTBENCH
+GHC_FLAGS      += -icompiler -Wall
 
-.PHONY: j4th
-j4th: compiler/*.hs
-	ghc $(GHC_FLAGS) compiler/j4.hs -o j4th
+TESTS := $(wildcard bin/*.awk) $(wildcard fs/*.awk)
+
+$(COMPILER_BIN): compiler/*.hs
+	ghc $(GHC_FLAGS) compiler/j4.hs -o $(COMPILER_BIN)
 
 .PHONY: lint
 lint:
@@ -14,10 +14,10 @@ lint:
 	hlint compiler/
 
 .PHONY: test
-test: $(TESTS)
+test: $(TESTS:awk=test)
 
 %.test: %.bin %.awk
-  # see: https://unix.stackexchange.com/a/589866
+	# see: https://unix.stackexchange.com/a/589866
 	./$< | awk -f $(basename $<).awk | grep . > /dev/null
 
 %_tb: j4.v %_tb.v
@@ -30,7 +30,8 @@ test: $(TESTS)
 
 .PRECIOUS: %.mem
 %.mem: %.fs j4th
-	./j4th < $< > $@
+	./$(COMPILER_BIN) < $< > $@
 
+.PHONY: clean
 clean:
-	rm -f */*.bin fs/*.mem
+	rm -f */*.bin fs/*.mem j4_tb $(COMPILER_BIN)

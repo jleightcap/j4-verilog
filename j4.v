@@ -69,7 +69,6 @@ reg  [`WIDTH-1:0] _rst0;            // top of return stack, asynchronous
 reg  [`DEPTH-1:0] rsp, _rsp;        // return stack pointer, synchronous and asynchronous
 
 initial begin
-    // FIXME(jl): _rst0 and subroutines.
     { rsp , _rsp , rs_we , _rst0 } = 0;
 end
 
